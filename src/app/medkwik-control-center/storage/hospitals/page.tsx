@@ -1,0 +1,340 @@
+'use client';
+
+import { useEffect, useState, useCallback } from 'react';
+import Link from 'next/link';
+import {
+  Search,
+  SlidersHorizontal,
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Eye,
+  Building2,
+  RefreshCw,
+  ArrowUpDown,
+} from 'lucide-react';
+
+import api from '@/lib/api';
+import { getSuperAdminPath } from '@/lib/routes';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { StorageProgressBar } from '@/components/storage/storage-progress-bar';
+import { cn } from '@/lib/utils';
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+interface HospitalStorageRow {
+  hospitalId: string;
+  hospitalName: string;
+  hospitalCode: string;
+  hospitalCity: string;
+  hospitalStatus: string;
+  totalFiles: number;
+  totalBytes: number;
+  totalBytesFormatted: string;
+  lastUpload: string | null;
+}
+
+const Skeleton = ({ className }: { className?: string }) => (
+  <div className={cn('animate-pulse rounded bg-gray-200', className)} />
+);
+
+const formatDate = (iso?: string | null) => {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+};
+
+const STATUS_BADGE: Record<string, string> = {
+  Active: 'bg-emerald-100 text-emerald-700',
+  Inactive: 'bg-gray-100 text-gray-600',
+  'Under Maintenance': 'bg-amber-100 text-amber-700',
+  Pending: 'bg-blue-100 text-blue-700',
+};
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+export default function HospitalStorageListPage() {
+  const [hospitals, setHospitals] = useState<HospitalStorageRow[]>([]);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState('');
+  const [sort, setSort] = useState('highestStorage');
+  const [page, setPage] = useState(1);
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  // Debounce search
+  useEffect(() => {
+    const t = window.setTimeout(() => setDebouncedSearch(search), 350);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const params = new URLSearchParams();
+      if (debouncedSearch) params.set('search', debouncedSearch);
+      if (filter && filter !== 'all') params.set('filter', filter);
+      if (sort) params.set('sort', sort);
+      params.set('page', String(page));
+      params.set('limit', '25');
+
+      const res = await api.get(`/admin/storage/hospitals?${params.toString()}`);
+      const d = res.data.data;
+      setHospitals(d.hospitals);
+      setTotal(d.total);
+      setTotalPages(d.totalPages);
+    } catch (err: unknown) {
+      setError((err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to load data.');
+    } finally {
+      setLoading(false);
+    }
+  }, [debouncedSearch, filter, sort, page]);
+
+  useEffect(() => { void fetchData(); }, [fetchData]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => { setPage(1); }, [debouncedSearch, filter, sort]);
+
+  const handleExport = async (fmt: 'csv' | 'json') => {
+    try {
+      const res = await api.get(`/admin/storage/export?format=${fmt}`, { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `hospital-storage.${fmt}`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      alert('Export failed.');
+    }
+  };
+
+  return (
+    <div className="space-y-5">
+      {/* ─── Header ─────────────────────────────────────────────────── */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <Link
+              href={getSuperAdminPath('/storage')}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+            >
+              <ChevronLeft size={13} />
+              Manage Storage
+            </Link>
+          </div>
+          <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
+            <Building2 size={20} className="text-indigo-600" />
+            Hospital Storage
+          </h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            {total > 0 ? `${total} hospital${total !== 1 ? 's' : ''}` : 'Storage breakdown per hospital'}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => void handleExport('csv')}>
+            <Download size={13} />CSV
+          </Button>
+          <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => void handleExport('json')}>
+            <Download size={13} />JSON
+          </Button>
+          <Button size="sm" className="h-8 gap-1.5 text-xs bg-indigo-600 hover:bg-indigo-700" onClick={() => void fetchData()}>
+            <RefreshCw size={13} />
+            Refresh
+          </Button>
+        </div>
+      </div>
+
+      {/* ─── Filters ────────────────────────────────────────────────── */}
+      <Card className="border-border shadow-sm">
+        <CardContent className="pt-4 pb-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            {/* Search */}
+            <div className="relative flex-1 max-w-xs">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search by name, code, email…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-8 h-8 text-sm"
+              />
+            </div>
+
+            {/* Filter */}
+            <div className="flex items-center gap-1.5">
+              <SlidersHorizontal size={13} className="text-muted-foreground" />
+              <Select value={filter || 'all'} onValueChange={(v: string | null) => setFilter(!v || v === 'all' ? '' : v)}>
+                <SelectTrigger className="h-8 w-36 text-xs">
+                  <SelectValue placeholder="All hospitals" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Hospitals</SelectItem>
+                  <SelectItem value="active">Active Only</SelectItem>
+                  <SelectItem value="inactive">Inactive Only</SelectItem>
+                  <SelectItem value="gt500mb">Storage &gt; 500 MB</SelectItem>
+                  <SelectItem value="gt1gb">Storage &gt; 1 GB</SelectItem>
+                  <SelectItem value="gt5gb">Storage &gt; 5 GB</SelectItem>
+                  <SelectItem value="gt10gb">Storage &gt; 10 GB</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Sort */}
+            <div className="flex items-center gap-1.5">
+              <ArrowUpDown size={13} className="text-muted-foreground" />
+              <Select value={sort} onValueChange={(v: string | null) => { if (v) setSort(v); }}>
+                <SelectTrigger className="h-8 w-44 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="highestStorage">Highest Storage</SelectItem>
+                  <SelectItem value="lowestStorage">Lowest Storage</SelectItem>
+                  <SelectItem value="mostFiles">Most Files</SelectItem>
+                  <SelectItem value="leastFiles">Least Files</SelectItem>
+                  <SelectItem value="newestUpload">Newest Upload</SelectItem>
+                  <SelectItem value="oldestUpload">Oldest Upload</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ─── Error ──────────────────────────────────────────────────── */}
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      {/* ─── Table ──────────────────────────────────────────────────── */}
+      <Card className="border-border shadow-sm overflow-hidden">
+        <CardHeader className="pb-0 pt-4 px-5">
+          <CardTitle className="text-sm font-semibold text-foreground">All Hospitals</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          {loading ? (
+            <div className="p-5 space-y-3">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Skeleton key={i} className="h-14 w-full rounded-lg" />
+              ))}
+            </div>
+          ) : hospitals.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <Building2 size={36} className="text-muted-foreground/40 mb-3" />
+              <p className="text-sm font-medium text-muted-foreground">No hospitals found</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {debouncedSearch ? 'Try a different search term' : 'No storage data available yet'}
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-gray-50">
+                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Hospital
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground hidden sm:table-cell">
+                      Files
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Storage
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground hidden md:table-cell">
+                      Last Upload
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground hidden lg:table-cell">
+                      Status
+                    </th>
+                    <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Action
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {hospitals.map((h) => (
+                    <tr key={h.hospitalId} className="hover:bg-gray-50 transition-colors group">
+                      <td className="px-5 py-3.5">
+                        <div>
+                          <p className="font-semibold text-foreground text-sm leading-tight">{h.hospitalName}</p>
+                          <p className="text-[11px] text-muted-foreground mt-0.5">
+                            {h.hospitalCode} · {h.hospitalCity}
+                          </p>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3.5 text-right tabular-nums text-sm text-muted-foreground hidden sm:table-cell">
+                        {h.totalFiles.toLocaleString()}
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <div className="min-w-[140px]">
+                          <p className="font-semibold text-foreground text-sm">{h.totalBytesFormatted}</p>
+                          <StorageProgressBar
+                            used={h.totalBytes}
+                            size="sm"
+                            className="mt-1.5"
+                          />
+                        </div>
+                      </td>
+                      <td className="px-4 py-3.5 text-right text-xs text-muted-foreground hidden md:table-cell">
+                        {formatDate(h.lastUpload)}
+                      </td>
+                      <td className="px-4 py-3.5 hidden lg:table-cell">
+                        <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-semibold',
+                          STATUS_BADGE[h.hospitalStatus] || 'bg-gray-100 text-gray-600')}>
+                          {h.hospitalStatus}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5 text-right">
+                        <Link href={getSuperAdminPath(`/storage/hospitals/${h.hospitalId}`)}>
+                          <Button size="sm" variant="outline" className="h-7 gap-1 text-xs">
+                            <Eye size={12} />
+                            View
+                          </Button>
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* ─── Pagination ─────────────────────────────────────────── */}
+          {!loading && totalPages > 1 && (
+            <div className="flex items-center justify-between border-t border-border px-5 py-3">
+              <p className="text-xs text-muted-foreground">
+                Page {page} of {totalPages} · {total} hospitals
+              </p>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 w-7 p-0"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                >
+                  <ChevronLeft size={14} />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 w-7 p-0"
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                >
+                  <ChevronRight size={14} />
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
