@@ -35,7 +35,7 @@ const HA_REFRESH_COOKIE = 'ha_refreshToken';
 const RE_REFRESH_COOKIE = 're_refreshToken';
 const DR_REFRESH_COOKIE = 'dr_refreshToken';
 const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
-const PRODUCTION_API_ORIGIN = 'https://api.medikwikhealthbuddy.in';
+const PRODUCTION_API_ORIGIN = 'http://13.201.29.22:5001';
 
 const normalizeApiOrigin = (value?: string) => {
   const configured = value?.trim();

@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-const productionApiOrigin = "https://api.medikwikhealthbuddy.in";
+const productionApiOrigin = "http://13.201.29.22:5001";
 
 const normalizeApiOrigin = (value?: string) => {
   const configured = value?.trim();
@@ -13,6 +13,7 @@ const normalizeApiOrigin = (value?: string) => {
 };
 
 const backendOrigin = normalizeApiOrigin(process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL);
+const backendWsOrigin = backendOrigin.replace(/^http/, 'ws');
 
 const nextConfig: NextConfig = {
   devIndicators: false,
@@ -42,7 +43,7 @@ const nextConfig: NextConfig = {
               "font-src 'self' https://fonts.gstatic.com",
               "media-src 'self' data: blob:",
               `img-src 'self' data: blob: https://*.amazonaws.com https://s3.amazonaws.com ${backendOrigin}`,
-              `connect-src 'self' http://localhost:* https://localhost:* ws://localhost:* wss://localhost:* ${backendOrigin} wss://${new URL(backendOrigin).host} https://*.amazonaws.com https://s3.amazonaws.com https://*.googleapis.com https://fcm.googleapis.com https://*.firebaseio.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://challenges.cloudflare.com https://accounts.google.com`,
+              `connect-src 'self' http://localhost:* https://localhost:* ws://localhost:* wss://localhost:* ${backendOrigin} ${backendWsOrigin} https://*.amazonaws.com https://s3.amazonaws.com https://*.googleapis.com https://fcm.googleapis.com https://*.firebaseio.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://challenges.cloudflare.com https://accounts.google.com`,
               "frame-src 'self' https://challenges.cloudflare.com https://accounts.google.com",
               "worker-src 'self' blob:",
             ].join("; "),

@@ -145,6 +145,10 @@ export function AdminLoginScreen({ mode = 'super-admin' }: AdminLoginScreenProps
   }, []);
 
   const renderTurnstile = useCallback(() => {
+    if (typeof window !== 'undefined' && window.turnstile) {
+      turnstileScriptLoaded.current = true;
+    }
+
     if (!turnstileSiteKey || !turnstileScriptLoaded.current || !window.turnstile || turnstileWidgetId.current) {
       return;
     }
@@ -164,7 +168,7 @@ export function AdminLoginScreen({ mode = 'super-admin' }: AdminLoginScreenProps
       },
       'error-callback': () => {
         setTurnstileToken('');
-        setErrorMessage('Captcha failed to load. Please retry.');
+        setErrorMessage('Captcha verification failed. Please check your domain configuration in Cloudflare Dashboard.');
       },
     });
   }, [turnstileContainerId, turnstileSiteKey]);
@@ -178,6 +182,9 @@ export function AdminLoginScreen({ mode = 'super-admin' }: AdminLoginScreenProps
   }, [loginPath, router, searchParams]);
 
   useEffect(() => {
+    if (typeof window !== 'undefined' && window.turnstile) {
+      turnstileScriptLoaded.current = true;
+    }
     if (step === 'login') {
       renderTurnstile();
     }
