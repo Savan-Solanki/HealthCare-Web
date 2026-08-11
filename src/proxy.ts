@@ -35,7 +35,7 @@ const HA_REFRESH_COOKIE = 'ha_refreshToken';
 const RE_REFRESH_COOKIE = 're_refreshToken';
 const DR_REFRESH_COOKIE = 'dr_refreshToken';
 const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
-const PRODUCTION_API_ORIGIN = 'http://13.201.29.22:5001';
+const PRODUCTION_API_ORIGIN = 'http://13.205.6.9:5001';
 
 const normalizeApiOrigin = (value?: string) => {
   const configured = value?.trim();
@@ -86,12 +86,12 @@ const addSecurityHeaders = (res: NextResponse) => {
     'Content-Security-Policy',
     [
       "default-src 'self'",
-      `script-src ${scriptSrc.join(' ')}`,
+      `script-src ${scriptSrc.join(' ')} https://accounts.google.com https://*.google.com https://play.google.com`,
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com data:",
       "img-src 'self' data: blob: https:",
-      `connect-src 'self' ${API_ORIGIN} ${wsOrigin} ${S3_UPLOAD_CONNECT_ORIGINS} https://challenges.cloudflare.com`,
-      "frame-src 'self' https://challenges.cloudflare.com",
+      `connect-src 'self' ${API_ORIGIN} ${wsOrigin} ${S3_UPLOAD_CONNECT_ORIGINS} https://challenges.cloudflare.com https://accounts.google.com https://play.google.com https://*.google.com`,
+      "frame-src 'self' https://challenges.cloudflare.com https://accounts.google.com https://play.google.com https://*.google.com",
       "base-uri 'self'",
       "form-action 'self'",
     ].join('; ')

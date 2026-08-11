@@ -1,12 +1,13 @@
 import axios from 'axios';
 import { getAuthPortalFromPath, getAuthPortalFromWindow } from '@/lib/auth-portal';
-import { API_BASE_URL } from '@/lib/api-url';
+import { getApiBaseUrl } from '@/lib/api-url';
 import type { AuthPortal } from '@/lib/routes';
 
 export async function refreshAuthSession(portal?: AuthPortal) {
   const resolvedPortal = portal ?? getAuthPortalFromWindow();
+  const baseUrl = getApiBaseUrl();
   const { data } = await axios.post(
-    `${API_BASE_URL}/auth/refresh`,
+    `${baseUrl}/auth/refresh`,
     resolvedPortal ? { portal: resolvedPortal } : {},
     {
       withCredentials: true,

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Bell, CalendarClock, Check, Loader2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/lib/api';
-import { API_BASE_URL } from '@/lib/api-url';
+import { getApiBaseUrl } from '@/lib/api-url';
 import { Button } from '@/components/ui/button';
 
 const NOTIFICATION_EVENT = 'medkwik:appointment-notification';
@@ -48,7 +48,8 @@ const formatNotificationTime = (value: string) => {
 };
 
 const buildStreamUrl = () => {
-  const base = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
+  const baseUrl = getApiBaseUrl();
+  const base = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
   return `${base}/notifications/stream`;
 };
 

@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-const productionApiOrigin = "http://13.201.29.22:5001";
+const productionApiOrigin = "http://13.205.6.9:5001";
 
 const normalizeApiOrigin = (value?: string) => {
   const configured = value?.trim();
@@ -38,13 +38,13 @@ const nextConfig: NextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.googleapis.com https://*.gstatic.com https://challenges.cloudflare.com https://accounts.google.com",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.googleapis.com https://*.gstatic.com https://challenges.cloudflare.com https://accounts.google.com https://*.google.com https://play.google.com",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               "media-src 'self' data: blob:",
               `img-src 'self' data: blob: https://*.amazonaws.com https://s3.amazonaws.com ${backendOrigin}`,
-              `connect-src 'self' http://localhost:* https://localhost:* ws://localhost:* wss://localhost:* ${backendOrigin} ${backendWsOrigin} https://*.amazonaws.com https://s3.amazonaws.com https://*.googleapis.com https://fcm.googleapis.com https://*.firebaseio.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://challenges.cloudflare.com https://accounts.google.com`,
-              "frame-src 'self' https://challenges.cloudflare.com https://accounts.google.com",
+              `connect-src 'self' http://localhost:* https://localhost:* ws://localhost:* wss://localhost:* ${backendOrigin} ${backendWsOrigin} https://*.amazonaws.com https://s3.amazonaws.com https://*.googleapis.com https://fcm.googleapis.com https://*.firebaseio.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://challenges.cloudflare.com https://accounts.google.com https://play.google.com https://*.google.com`,
+              "frame-src 'self' https://challenges.cloudflare.com https://accounts.google.com https://play.google.com https://*.google.com",
               "worker-src 'self' blob:",
             ].join("; "),
           },

@@ -15,7 +15,7 @@ import {
   RECEPTIONIST_LOGIN_PATH,
   RECEPTIONIST_BASE_PATH,
 } from "@/lib/routes";
-import { API_BASE_URL } from "@/lib/api-url";
+import { API_BASE_URL, getApiBaseUrl } from "@/lib/api-url";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -84,6 +84,7 @@ const forceLogout = (message: string) => {
 api.interceptors.request.use(
   (config) => {
     if (typeof window !== "undefined") {
+      config.baseURL = getApiBaseUrl();
       const token = sessionStorage.getItem("access_token");
       if (token) {
         config.headers["Authorization"] = `Bearer ${token}`;
@@ -116,8 +117,9 @@ api.interceptors.response.use(
 
       try {
         const portal = getAuthPortalFromWindow();
+        const baseUrl = getApiBaseUrl();
         const { data } = await axios.post(
-          `${API_BASE_URL}/auth/refresh`,
+          `${baseUrl}/auth/refresh`,
           portal ? { portal } : {},
           {
             withCredentials: true,
