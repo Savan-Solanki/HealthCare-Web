@@ -13,7 +13,7 @@ coverage/
 *.tsbuildinfo
 
 .env
-.env.*
+.env*
 backend/.env
 web/.env.local
 !.env.example
