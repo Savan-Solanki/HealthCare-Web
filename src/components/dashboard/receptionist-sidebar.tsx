@@ -74,7 +74,7 @@ export function ReceptionistSidebar() {
             />
           </div>
           <div className="min-w-0">
-            <p className="font-semibold text-sm text-foreground leading-tight truncate">healthcare</p>
+            <p className="font-semibold text-sm text-foreground leading-tight truncate">Healthcare</p>
             <p className="text-xs text-primary font-medium">Receptionist</p>
           </div>
         </div>

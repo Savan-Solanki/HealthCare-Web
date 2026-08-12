@@ -679,7 +679,7 @@ export function AdminLoginScreen({ mode = 'super-admin' }: AdminLoginScreenProps
           )}
 
           <div className="mt-8 text-center text-xs text-muted-foreground">
-            <p>&copy; {new Date().getFullYear()} healthcare. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} Healthcare. All rights reserved.</p>
           </div>
         </div>
       </div>

@@ -47,7 +47,7 @@ export function DoctorSidebar() {
             />
           </div>
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold leading-tight text-foreground">healthcare</p>
+            <p className="truncate text-sm font-semibold leading-tight text-foreground">Healthcare</p>
             <p className="text-xs font-medium text-primary">Doctor</p>
           </div>
         </div>

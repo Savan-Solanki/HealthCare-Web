@@ -800,7 +800,7 @@ export default function DoctorPrescriptionPage() {
                     type="checkbox"
                   />
                   <span>
-                    <span className="block text-sm font-semibold text-slate-950">Include healthcare logo</span>
+                    <span className="block text-sm font-semibold text-slate-950">Include Healthcare logo</span>
                     <span className="mt-1 block text-xs text-slate-500">
                       Optional platform branding on the prescription PDF header.
                     </span>
