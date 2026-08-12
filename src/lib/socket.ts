@@ -1,5 +1,5 @@
 import { io, Socket } from 'socket.io-client';
-import { API_ORIGIN } from './api-url';
+import { getSocketOrigin } from './api-url';
 
 let socket: Socket | null = null;
 
@@ -16,8 +16,8 @@ export const getSocket = (): Socket | null => {
   }
 
   if (!socket) {
-    // API_ORIGIN is e.g. "http://localhost:5000" or similar
-    socket = io(`${API_ORIGIN}/staff`, {
+    const socketOrigin = getSocketOrigin();
+    socket = io(`${socketOrigin}/staff`, {
       auth: {
         token,
       },
