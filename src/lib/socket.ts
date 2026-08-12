@@ -17,6 +17,14 @@ export const getSocket = (): Socket | null => {
 
   if (!socket) {
     const socketOrigin = getSocketOrigin();
+
+    // Browsers on HTTPS pages (e.g. Vercel) block unencrypted WebSocket connections to http:// IP hosts due to TLS policies.
+    // Prevent TLS error console spam by skipping socket initialization when accessing an HTTP backend from HTTPS.
+    if (typeof window !== 'undefined' && window.location?.protocol === 'https:' && socketOrigin.startsWith('http://')) {
+      console.log('[Socket] Realtime WebSockets disabled on HTTPS browser for unencrypted HTTP backend origin.');
+      return null;
+    }
+
     socket = io(`${socketOrigin}/staff`, {
       auth: {
         token,
@@ -24,6 +32,7 @@ export const getSocket = (): Socket | null => {
       transports: ['websocket', 'polling'],
       autoConnect: true,
       reconnection: true,
+      reconnectionAttempts: 3,
     });
 
     socket.on('connect', () => {
